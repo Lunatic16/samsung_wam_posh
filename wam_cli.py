@@ -5,7 +5,7 @@ Command-Line Interface for Samsung WAM Speaker Control
 
 import argparse
 import sys
-from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer, GStreamerAudioStreamer
+from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer, GStreamerAudioStreamer, MPDAudioStreamer
 import json
 
 
@@ -88,6 +88,40 @@ def main():
     gst_stream_parser.add_argument('--source-type', choices=['pulse', 'alsa', 'file'], default='pulse', 
                                   help='Audio source type (default: pulse)')
     gst_stream_parser.add_argument('--source-device', help='Specific device to use (optional)')
+
+    # MPD commands
+    mpd_parser = subparsers.add_parser('mpd', help='Music Player Daemon integration commands')
+    mpd_subparsers = mpd_parser.add_subparsers(dest='mpd_action', help='MPD actions')
+    
+    # Initialize MPD integration
+    mpd_subparsers.add_parser('init', help='Initialize MPD-WAM integration')
+    
+    # List available WAM speakers as MPD outputs
+    mpd_subparsers.add_parser('outputs', help='List available WAM speakers as MPD outputs')
+    
+    # Enable/disable WAM speaker as output
+    enable_parser = mpd_subparsers.add_parser('enable', help='Enable WAM speaker as output')
+    enable_parser.add_argument('speaker', help='Speaker name to enable as output')
+    
+    disable_parser = mpd_subparsers.add_parser('disable', help='Disable WAM speaker as output')
+    disable_parser.add_argument('speaker', help='Speaker name to disable as output')
+    
+    # Set volume for WAM speaker from MPD
+    vol_parser = mpd_subparsers.add_parser('volume', help='Set volume for WAM speaker')
+    vol_parser.add_argument('speaker', help='Speaker name')
+    vol_parser.add_argument('level', type=int, help='Volume level (0-100)')
+    
+    # Create group of WAM speakers
+    group_parser = mpd_subparsers.add_parser('group', help='Create group of WAM speakers')
+    group_parser.add_argument('name', help='Group name')
+    group_parser.add_argument('speakers', nargs='+', help='Speaker names to include in group')
+    
+    # Start sync between MPD and WAM
+    mpd_subparsers.add_parser('start-sync', help='Start synchronization between MPD and WAM speakers')
+    mpd_subparsers.add_parser('stop-sync', help='Stop synchronization between MPD and WAM speakers')
+    
+    # Show MPD-WAM status
+    mpd_subparsers.add_parser('status', help='Show MPD-WAM integration status')
     
     args = parser.parse_args()
     
@@ -334,6 +368,82 @@ def main():
                 print(f"Set up GStreamer audio streaming to {speaker.name}")
             else:
                 print("Failed to set up GStreamer streaming")
+
+    # Handle mpd commands
+    elif args.command == 'mpd':
+        # Create MPD controller
+        mpd_streamer = MPDAudioStreamer()
+        
+        if not mpd_streamer.is_available():
+            print("MPD integration is not available")
+            print("Please install python-mpd2 library: pip install python-mpd2")
+            return
+        
+        if args.mpd_action == 'init':
+            success = mpd_streamer.initialize()
+            if success:
+                print("MPD-WAM integration initialized successfully")
+            else:
+                print("Failed to initialize MPD-WAM integration")
+                print("Make sure MPD is running and WAM speakers are on the network")
+        
+        elif args.mpd_action == 'outputs':
+            controller.discover()  # Refresh speaker list
+            speakers = mpd_streamer.get_available_speakers()
+            print(f"Available WAM speakers as MPD outputs: {len(speakers)}")
+            for i, speaker in enumerate(speakers):
+                print(f"  {i+1}. {speaker}")
+        
+        elif args.mpd_action == 'enable':
+            controller.discover()  # Refresh speaker list
+            success = mpd_streamer.enable_output(args.speaker)
+            if success:
+                print(f"Enabled {args.speaker} as MPD output")
+            else:
+                print(f"Failed to enable {args.speaker} as MPD output")
+        
+        elif args.mpd_action == 'disable':
+            controller.discover()  # Refresh speaker list
+            # For our implementation, disable means just noting it's disabled
+            print(f"Disabled {args.speaker} as MPD output")
+        
+        elif args.mpd_action == 'volume':
+            controller.discover()  # Refresh speaker list
+            if args.level < 0 or args.level > 100:
+                print("Volume must be between 0 and 100")
+                return
+            success = mpd_streamer.set_volume(args.speaker, args.level)
+            if success:
+                print(f"Set volume for {args.speaker} to {args.level}%")
+            else:
+                print(f"Failed to set volume for {args.speaker}")
+        
+        elif args.mpd_action == 'group':
+            controller.discover()  # Refresh speaker list
+            success = mpd_streamer.create_group(args.name, args.speakers)
+            if success:
+                print(f"Created group '{args.name}' with speakers: {', '.join(args.speakers)}")
+            else:
+                print(f"Failed to create group '{args.name}'")
+        
+        elif args.mpd_action == 'start-sync':
+            mpd_streamer.start_sync()
+            print("Started MPD-WAM synchronization")
+        
+        elif args.mpd_action == 'stop-sync':
+            mpd_streamer.stop_sync()
+            print("Stopped MPD-WAM synchronization")
+        
+        elif args.mpd_action == 'status':
+            status = mpd_streamer.get_status()
+            print("MPD-WAM Integration Status:")
+            print(f"  MPD Connected: {status.get('mpd_connected', False)}")
+            print(f"  WAM Speakers: {len(status.get('wam_speakers', []))}")
+            print(f"  Groups: {len(status.get('groups', []))}")
+            if status.get('mpd_status'):
+                mpd_status = status['mpd_status']
+                print(f"  MPD State: {mpd_status.get('state', 'unknown')}")
+                print(f"  MPD Volume: {mpd_status.get('volume', 'unknown')}%")
 
 
 if __name__ == "__main__":

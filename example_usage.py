@@ -3,7 +3,7 @@
 Example usage of the Samsung WAM Speaker Controller
 """
 
-from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer, GStreamerAudioStreamer
+from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer, GStreamerAudioStreamer, MPDAudioStreamer
 import time
 
 
@@ -315,6 +315,68 @@ def example_gstreamer_integration():
         print(f"Failed to set up GStreamer streaming to {speaker.name}")
 
 
+def example_mpd_integration():
+    """
+    Example: MPD integration
+    """
+    print("\n=== MPD Integration Example ===")
+    
+    mpd_streamer = MPDAudioStreamer()
+    
+    if not mpd_streamer.is_available():
+        print("MPD integration is not available on this system")
+        print("Please install python-mpd2: pip install python-mpd2")
+        print("Also ensure MPD is running on your system")
+        return
+    
+    print("MPD integration is available!")
+    
+    # Try to initialize the MPD-WAM integration
+    print("Initializing MPD-WAM integration...")
+    success = mpd_streamer.initialize()
+    if not success:
+        print("Failed to initialize MPD-WAM integration")
+        print("Make sure MPD is running and WAM speakers are on the network")
+        return
+    
+    print("MPD-WAM integration initialized successfully!")
+    
+    # Get available speakers
+    speakers = mpd_streamer.get_available_speakers()
+    print(f"\nAvailable WAM speakers: {speakers}")
+    
+    if speakers:
+        # Example: Enable first speaker as output
+        first_speaker = speakers[0]
+        print(f"\nEnabling {first_speaker} as MPD output...")
+        enable_success = mpd_streamer.enable_output(first_speaker)
+        if enable_success:
+            print(f"Successfully enabled {first_speaker} as output")
+            
+            # Set volume
+            print(f"Setting volume for {first_speaker} to 60%...")
+            vol_success = mpd_streamer.set_volume(first_speaker, 60)
+            if vol_success:
+                print(f"Volume set successfully")
+        
+        # Show status
+        status = mpd_streamer.get_status()
+        print(f"\nCurrent status: {status}")
+        
+        # Start sync loop (but stop it quickly for the example)
+        print("Starting sync loop (will continue in background)...")
+        mpd_streamer.start_sync()
+        time.sleep(2)  # Run for a short time
+        
+        # Stop sync
+        print("Stopping sync loop...")
+        mpd_streamer.stop_sync()
+    
+    # Clean up
+    mpd_streamer.cleanup()
+    print("MPD integration example completed")
+
+
 def main():
     """
     Main function to run all examples
@@ -330,6 +392,7 @@ def main():
     example_info_retrieval()
     example_pipewire_integration()
     example_gstreamer_integration()
+    example_mpd_integration()
     
     print("\nAll examples completed!")
 

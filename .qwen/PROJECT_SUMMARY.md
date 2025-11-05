@@ -37,6 +37,8 @@ Create a Linux-compatible implementation of the Samsung WAM (Wireless Audio Mult
 - **[COMPLETED] GStreamer Integration**: Added advanced audio streaming capabilities using GStreamer with Python bindings
 - **[COMPLETED] Enhanced CLI**: Added gstreamer subcommands for streaming audio to speakers
 - **[COMPLETED] Example Updates**: Updated example usage to demonstrate GStreamer integration
+- **[COMPLETED] MPD Integration**: Added Music Player Daemon integration for controlling WAM speakers from MPD
+- **[COMPLETED] Complete Integration**: Full integration of MPD with discovery, control, and grouping of WAM speakers
 
 ## Current Plan
 - **[DONE]** Analyze the current PowerShell implementation for network speaker discovery using SSDP
@@ -48,6 +50,7 @@ Create a Linux-compatible implementation of the Samsung WAM (Wireless Audio Mult
 - **[DONE]** Create a main application that integrates all functionality
 - **[DONE]** Add PipeWire integration for audio streaming and device management
 - **[DONE]** Add advanced streaming functionality with GStreamer for actual audio routing
+- **[DONE]** Add MPD integration for controlling WAM speakers from Music Player Daemon
 - **[DONE]** Update documentation and examples to include new functionality
 - **[DONE]** Test the application with actual Samsung WAM speakers on a real network (completed - all functions working as expected)
 

@@ -515,6 +515,118 @@ class GStreamerAudioStreamer:
         self.gst_streamer.stop_all_streams()
 
 
+class MPDAudioStreamer:
+    """
+    Integrates Samsung WAM speakers with Music Player Daemon (MPD)
+    """
+    
+    def __init__(self):
+        try:
+            from mpd_integration import WAMMPDIntegration
+            self.mpd_integration = WAMMPDIntegration()
+            self.available = True
+        except ImportError:
+            print("MPD integration not available. Install required modules (python-mpd2).")
+            self.mpd_integration = None
+            self.available = False
+    
+    def is_available(self) -> bool:
+        """
+        Check if MPD integration is available
+        """
+        return self.available and self.mpd_integration is not None
+    
+    def initialize(self) -> bool:
+        """
+        Initialize the MPD-WAM integration
+        """
+        if not self.is_available():
+            return False
+        
+        return self.mpd_integration.initialize()
+    
+    def get_available_speakers(self) -> List[str]:
+        """
+        Get list of available WAM speakers
+        """
+        if not self.is_available():
+            return []
+        
+        return self.mpd_integration.get_available_speakers()
+    
+    def enable_output(self, speaker_name: str) -> bool:
+        """
+        Enable a WAM speaker as an output
+        """
+        if not self.is_available():
+            return False
+        
+        return self.mpd_integration.enable_output(speaker_name)
+    
+    def set_volume(self, speaker_name: str, volume: int) -> bool:
+        """
+        Set volume for a WAM speaker
+        """
+        if not self.is_available():
+            return False
+        
+        return self.mpd_integration.set_volume(speaker_name, volume)
+    
+    def create_group(self, group_name: str, speaker_names: List[str]) -> bool:
+        """
+        Create a group of WAM speakers
+        """
+        if not self.is_available():
+            return False
+        
+        return self.mpd_integration.create_group(group_name, speaker_names)
+    
+    def start_playback(self, target: str, target_type: str = "speaker") -> bool:
+        """
+        Start playback on a speaker or group
+        """
+        if not self.is_available():
+            return False
+        
+        return self.mpd_integration.start_playback(target, target_type)
+    
+    def start_sync(self):
+        """
+        Start the synchronization loop between MPD and WAM speakers
+        """
+        if not self.is_available():
+            return
+        
+        self.mpd_integration.start_sync()
+    
+    def stop_sync(self):
+        """
+        Stop the synchronization loop
+        """
+        if not self.is_available():
+            return
+        
+        self.mpd_integration.stop_sync()
+    
+    def get_status(self) -> Dict[str, any]:
+        """
+        Get overall status of the integration
+        """
+        if not self.is_available():
+            return {}
+        
+        return self.mpd_integration.get_status()
+    
+    def cleanup(self):
+        """
+        Clean up resources
+        """
+        if not self.is_available():
+            return
+        
+        self.mpd_integration.cleanup()
+
+
 class SamsungWamDiscovery:
     """
     Discover Samsung WAM speakers on the network using SSDP

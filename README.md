@@ -13,6 +13,7 @@ A comprehensive Linux-compatible Python implementation for controlling Samsung W
 - **Network Configuration**: WiFi settings, speaker information, and system settings management
 - **PipeWire Integration**: Advanced audio streaming and volume synchronization with PipeWire audio server
 - **GStreamer Integration**: Advanced audio streaming capabilities using GStreamer
+- **MPD Integration**: Full integration with Music Player Daemon for WAM speaker control
 - **Command-Line Interface**: Complete CLI tool for integration into scripts and automation
 
 ## Files
@@ -35,8 +36,11 @@ PipeWire-specific integration module for audio streaming and device management.
 ### `gstreamer_integration.py`
 GStreamer-specific integration module for advanced audio streaming capabilities.
 
+### `mpd_integration.py`
+MPD (Music Player Daemon) integration module for controlling WAM speakers from MPD.
+
 ### `example_usage.py`
-Complete examples demonstrating all the functionality of the library, including PipeWire and GStreamer integration.
+Complete examples demonstrating all the functionality of the library, including PipeWire, GStreamer, and MPD integration.
 
 ### `WAM_API.txt`
 A comprehensive list of API commands available for Samsung WAM speakers, organized into:
@@ -55,6 +59,7 @@ A JSON file containing configuration for Samsung speakers on the network, includ
    - Ubuntu/Debian: `sudo apt-get install python3-gi gir1.2-gstreamer-1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good`
    - Fedora/RHEL: `sudo dnf install python3-gobject gstreamer1.0-plugins-base gstreamer1.0-plugins-good`
    - Arch: `sudo pacman -S python-gobject gst-plugins-base gst-plugins-good`
+5. For MPD integration: Install `python-mpd2` library: `pip install python-mpd2`
 
 ## Usage
 
@@ -92,6 +97,15 @@ python3 wam_cli.py pipewire sync "Living Room" sink0  # Sync volumes
 
 # GStreamer integration commands
 python3 wam_cli.py gstreamer stream "Living Room" --source-type pulse  # Stream using PulseAudio source
+
+# MPD integration commands
+python3 wam_cli.py mpd init                    # Initialize MPD-WAM integration
+python3 wam_cli.py mpd outputs                 # List available WAM speakers as MPD outputs
+python3 wam_cli.py mpd enable "Living Room"    # Enable speaker as MPD output
+python3 wam_cli.py mpd volume "Living Room" 75 # Set volume for WAM speaker from MPD
+python3 wam_cli.py mpd group "All Speakers" "Living Room" "Kitchen" # Create group of speakers
+python3 wam_cli.py mpd start-sync              # Start synchronization between MPD and WAM
+python3 wam_cli.py mpd status                  # Show MPD-WAM integration status
 ```
 
 ### Python Library Usage
@@ -126,12 +140,28 @@ gstreamer = GStreamerAudioStreamer()
 if gstreamer.is_available():
     # Stream audio from system to speaker
     gstreamer.stream_to_speaker(speaker, source_type="pulse")
+
+# MPD integration
+from wam_discovery import MPDAudioStreamer
+mpd_streamer = MPDAudioStreamer()
+if mpd_streamer.is_available():
+    # Initialize MPD-WAM integration
+    mpd_streamer.initialize()
+    # Enable speaker as MPD output
+    mpd_streamer.enable_output("Living Room")
+    # Set volume from MPD
+    mpd_streamer.set_volume("Living Room", 70)
+    # Create group of speakers
+    mpd_streamer.create_group("All Speakers", ["Living Room", "Kitchen", "Dining Room"])
+    # Start synchronization between MPD and WAM
+    mpd_streamer.start_sync()
 ```
 
 ## Requirements
 
 - Python 3.6+
 - requests library
+- python-mpd2 library for MPD integration
 - PipeWire (or PulseAudio for compatibility) audio server
 - For advanced audio streaming: GStreamer with Python bindings (PyGObject)
 - Samsung WAM speakers on the local network
