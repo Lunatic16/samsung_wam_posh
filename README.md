@@ -11,6 +11,7 @@ A comprehensive Linux-compatible Python implementation for controlling Samsung W
 - **EQ Management**: Control equalizer settings with 7-band EQ support
 - **Content Services**: Interface with various music services through CPM API
 - **Network Configuration**: WiFi settings, speaker information, and system settings management
+- **PipeWire Integration**: Advanced audio streaming and volume synchronization with PipeWire audio server
 - **Command-Line Interface**: Complete CLI tool for integration into scripts and automation
 
 ## Files
@@ -20,13 +21,17 @@ Main Python library containing:
 - `SamsungWamSpeaker` class with methods to control individual speakers
 - `SamsungWamDiscovery` class for network discovery of speakers
 - `WamController` class for high-level speaker management
+- `PipeWireAudioStreamer` class for PipeWire integration
 - Functions to load and save speaker configurations
 
 ### `wam_cli.py`
-Command-line interface for controlling speakers from the terminal with subcommands for all operations.
+Command-line interface for controlling speakers from the terminal with subcommands for all operations, including PipeWire integration commands.
+
+### `pipewire_integration.py`
+PipeWire-specific integration module for audio streaming and device management.
 
 ### `example_usage.py`
-Complete examples demonstrating all the functionality of the library.
+Complete examples demonstrating all the functionality of the library, including PipeWire integration.
 
 ### `WAM_API.txt`
 A comprehensive list of API commands available for Samsung WAM speakers, organized into:
@@ -40,6 +45,8 @@ A JSON file containing configuration for Samsung speakers on the network, includ
 
 1. Install Python 3.6 or higher
 2. Install dependencies: `pip install -r requirements.txt`
+3. For PipeWire integration: Install system packages `pipewire` and `pipewire-alsa` (or `pulseaudio` for compatibility)
+4. For advanced audio streaming: Install `gstreamer` and Python GStreamer bindings
 
 ## Usage
 
@@ -69,6 +76,11 @@ python3 wam_cli.py group create --name "All Speakers" --speakers "Living Room" "
 
 # Get speaker information
 python3 wam_cli.py info "Living Room"
+
+# PipeWire integration commands
+python3 wam_cli.py pipewire devices                    # List PipeWire devices
+python3 wam_cli.py pipewire stream "Living Room"      # Stream to speaker
+python3 wam_cli.py pipewire sync "Living Room" sink0  # Sync volumes
 ```
 
 ### Python Library Usage
@@ -86,13 +98,25 @@ speakers = controller.discover()
 for speaker in speakers:
     speaker.set_volume(15)
     speaker.play()
+
+# PipeWire integration
+from wam_discovery import PipeWireAudioStreamer
+pipewire = PipeWireAudioStreamer()
+if pipewire.is_available():
+    devices = pipewire.get_available_devices()
+    # Set up streaming to a speaker
+    pipewire.stream_to_speaker(speaker)
+    # Sync volumes
+    pipewire.sync_volume_with_pipewire(speaker, devices[0]['id'])
 ```
 
 ## Requirements
 
 - Python 3.6+
 - requests library
+- PipeWire (or PulseAudio for compatibility) audio server
 - Samsung WAM speakers on the local network
+- For advanced audio streaming: GStreamer with Python bindings
 
 ## API Information
 

@@ -5,7 +5,7 @@ Command-Line Interface for Samsung WAM Speaker Control
 
 import argparse
 import sys
-from wam_discovery import WamController, SamsungWamSpeaker
+from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer
 import json
 
 
@@ -60,6 +60,23 @@ def main():
     led_parser.add_argument('speaker', help='Speaker name or IP address')
     led_parser.add_argument('state', nargs='?', choices=['on', 'off'], help='LED state')
     led_parser.add_argument('--get', action='store_true', help='Get current LED state')
+    
+    # PipeWire commands
+    pipewire_parser = subparsers.add_parser('pipewire', help='PipeWire integration commands')
+    pipewire_subparsers = pipewire_parser.add_subparsers(dest='pipewire_action', help='PipeWire actions')
+    
+    # List PipeWire devices
+    pipewire_subparsers.add_parser('devices', help='List available PipeWire devices')
+    
+    # Stream to speaker
+    stream_parser = pipewire_subparsers.add_parser('stream', help='Stream audio to speaker')
+    stream_parser.add_argument('speaker', help='Speaker name or IP address')
+    stream_parser.add_argument('--device', help='PipeWire device to stream from (optional)')
+    
+    # Sync volumes
+    sync_parser = pipewire_subparsers.add_parser('sync', help='Sync speaker volume with PipeWire')
+    sync_parser.add_argument('speaker', help='Speaker name or IP address')
+    sync_parser.add_argument('device', help='PipeWire device ID to sync with')
     
     args = parser.parse_args()
     
@@ -237,6 +254,51 @@ def main():
         else:
             # Just show current status
             print(f"Current LED status for {speaker.name}: {speaker.led}")
+    
+    # Handle pipewire commands
+    elif args.command == 'pipewire':
+        # Create PipeWire controller
+        pipewire_streamer = PipeWireAudioStreamer()
+        
+        if not pipewire_streamer.is_available():
+            print("PipeWire integration is not available or PipeWire is not running")
+            print("Please install and start PipeWire/PulseAudio on your system")
+            return
+        
+        if args.pipewire_action == 'devices':
+            devices = pipewire_streamer.get_available_devices()
+            print(f"Available PipeWire devices: {len(devices)}")
+            for i, device in enumerate(devices):
+                print(f"  {i+1}. {device['name']} (ID: {device['id']}, Type: {device['type']})")
+        
+        elif args.pipewire_action == 'stream':
+            controller.discover()
+            speaker = controller.get_speaker_by_name(args.speaker) or controller.get_speaker_by_ip(args.speaker)
+            
+            if not speaker:
+                print(f"Speaker '{args.speaker}' not found")
+                return
+            
+            success = pipewire_streamer.stream_to_speaker(speaker, args.device)
+            if success:
+                print(f"Set up streaming to {speaker.name}")
+                print("Note: Actual streaming requires additional setup with GStreamer")
+            else:
+                print("Failed to set up streaming")
+        
+        elif args.pipewire_action == 'sync':
+            controller.discover()
+            speaker = controller.get_speaker_by_name(args.speaker) or controller.get_speaker_by_ip(args.speaker)
+            
+            if not speaker:
+                print(f"Speaker '{args.speaker}' not found")
+                return
+            
+            success = pipewire_streamer.sync_volume_with_pipewire(speaker, args.device)
+            if success:
+                print(f"Synced volume between {speaker.name} and PipeWire device {args.device}")
+            else:
+                print("Failed to sync volumes")
 
 
 if __name__ == "__main__":

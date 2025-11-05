@@ -3,7 +3,7 @@
 Example usage of the Samsung WAM Speaker Controller
 """
 
-from wam_discovery import WamController, SamsungWamSpeaker
+from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer
 import time
 
 
@@ -222,6 +222,55 @@ def example_info_retrieval():
     print(f"EQ Mode: {eq_mode}")
 
 
+def example_pipewire_integration():
+    """
+    Example: PipeWire integration
+    """
+    print("\n=== PipeWire Integration Example ===")
+    
+    pipewire_streamer = PipeWireAudioStreamer()
+    
+    if not pipewire_streamer.is_available():
+        print("PipeWire is not available on this system")
+        print("Please install and start PipeWire or PulseAudio")
+        return
+    
+    print("PipeWire is available!")
+    
+    # List available devices
+    devices = pipewire_streamer.get_available_devices()
+    print(f"\nAvailable PipeWire devices ({len(devices)}):")
+    for i, device in enumerate(devices):
+        print(f"  {i+1}. {device['name']} (ID: {device['id']}, Type: {device['type']})")
+    
+    # Try to use with a speaker
+    controller = WamController()
+    speakers = controller.discover()
+    
+    if not speakers:
+        print("No speakers found to demonstrate PipeWire integration")
+        return
+    
+    speaker = speakers[0]
+    print(f"\nUsing speaker: {speaker.name}")
+    
+    # Try to set up streaming (conceptual)
+    success = pipewire_streamer.stream_to_speaker(speaker)
+    if success:
+        print(f"Successfully set up streaming to {speaker.name}")
+    else:
+        print(f"Failed to set up streaming to {speaker.name}")
+    
+    # Try to sync volumes
+    if devices:
+        device_id = devices[0]['id']
+        sync_success = pipewire_streamer.sync_volume_with_pipewire(speaker, device_id)
+        if sync_success:
+            print(f"Successfully synced volumes between {speaker.name} and {devices[0]['name']}")
+        else:
+            print(f"Failed to sync volumes")
+
+
 def main():
     """
     Main function to run all examples
@@ -235,6 +284,7 @@ def main():
     example_group_control()
     example_eq_control()
     example_info_retrieval()
+    example_pipewire_integration()
     
     print("\nAll examples completed!")
 

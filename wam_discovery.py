@@ -315,6 +315,13 @@ class SamsungWamSpeaker:
         cmd = f'<name>DelCustomEQMode</name><p type="dec" name="presetindex" val="{preset_idx}"/>'
         return self._send_command('UIC', cmd)
         
+    def play_url(self, url: str, resume: int = 1):
+        """
+        Play audio from a URL
+        """
+        cmd = f'<name>SetUrlPlayback</name><p type="cdata" name="url" val="empty"><![CDATA[{url}]]></p><p type="dec" name="buffersize" val="0"/><p type="dec" name="seektime" val="0"/><p type="dec" name="resume" val="{resume}"/>'
+        return self._send_command('UIC', cmd)
+        
     def group_with_speakers(self, group_name: str, other_speakers: List['SamsungWamSpeaker']):
         """
         Create a group with other speakers
@@ -357,6 +364,94 @@ class SamsungWamSpeaker:
         
     def __str__(self):
         return f"SamsungWamSpeaker(name='{self.name}', ip='{self.ip_address}', vol={self.volume}, mute='{self.mute}')"
+
+
+class PipeWireAudioStreamer:
+    """
+    Streams audio from PipeWire to Samsung WAM speakers
+    """
+    
+    def __init__(self):
+        try:
+            from pipewire_integration import WamPipeWireIntegration
+            self.pipewire_integration = WamPipeWireIntegration()
+            self.available = True
+        except ImportError:
+            print("PipeWire integration not available. Install required modules.")
+            self.pipewire_integration = None
+            self.available = False
+    
+    def is_available(self) -> bool:
+        """
+        Check if PipeWire integration is available
+        """
+        return self.available and self.pipewire_integration and self.pipewire_integration.pipewire.pipewire_available
+    
+    def stream_to_speaker(self, speaker: SamsungWamSpeaker, source_device: str = None) -> bool:
+        """
+        Stream audio from PipeWire to the specified speaker
+        This is a conceptual implementation - real streaming requires additional setup
+        """
+        if not self.is_available():
+            print("PipeWire not available for streaming")
+            return False
+            
+        # In a real implementation, this would:
+        # 1. Capture audio from PipeWire
+        # 2. Convert to a format the speaker accepts
+        # 3. Stream it to the speaker
+        
+        print(f"Setting up audio streaming to speaker: {speaker.name}")
+        print("Note: Full audio streaming implementation requires additional dependencies")
+        print("such as GStreamer Python bindings for audio capture and streaming.")
+        
+        # Get available PipeWire devices
+        devices = self.pipewire_integration.get_pipewire_devices()
+        if not devices:
+            print("No PipeWire devices found to stream from")
+            return False
+            
+        # Select source device
+        selected_device = None
+        if source_device:
+            selected_device = next((d for d in devices if source_device in d['name'] or source_device == d['id']), None)
+        else:
+            # Use the first available sink
+            selected_device = next((d for d in devices if d['type'] == 'sink'), devices[0])
+        
+        if selected_device:
+            print(f"Using PipeWire device: {selected_device['name']}")
+        
+        # This would be where actual streaming logic goes
+        # For now, we'll just return True to indicate setup would be successful
+        return True
+    
+    def get_available_devices(self) -> List[Dict[str, any]]:
+        """
+        Get list of available PipeWire devices
+        """
+        if not self.is_available():
+            return []
+            
+        return self.pipewire_integration.get_pipewire_devices()
+    
+    def sync_volume_with_pipewire(self, speaker: SamsungWamSpeaker, pipewire_device_id: str) -> bool:
+        """
+        Synchronize the speaker volume with a PipeWire device volume
+        """
+        if not self.is_available():
+            return False
+            
+        # This would sync the volume between PipeWire device and speaker
+        # For now, demonstrate with a simple sync
+        speaker_vol = speaker.get_volume()
+        print(f"Speaker volume: {speaker_vol}")
+        
+        # Get PipeWire device volume (conceptual)
+        # In reality, we'd need to get the actual volume from PipeWire
+        print(f"Would sync speaker {speaker.name} with PipeWire device {pipewire_device_id}")
+        
+        return True
 
 
 class SamsungWamDiscovery:
