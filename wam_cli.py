@@ -5,7 +5,7 @@ Command-Line Interface for Samsung WAM Speaker Control
 
 import argparse
 import sys
-from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer
+from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer, GStreamerAudioStreamer
 import json
 
 
@@ -77,6 +77,17 @@ def main():
     sync_parser = pipewire_subparsers.add_parser('sync', help='Sync speaker volume with PipeWire')
     sync_parser.add_argument('speaker', help='Speaker name or IP address')
     sync_parser.add_argument('device', help='PipeWire device ID to sync with')
+    
+    # GStreamer commands
+    gstreamer_parser = subparsers.add_parser('gstreamer', help='GStreamer integration commands')
+    gstreamer_subparsers = gstreamer_parser.add_subparsers(dest='gstreamer_action', help='GStreamer actions')
+    
+    # Stream to speaker with GStreamer
+    gst_stream_parser = gstreamer_subparsers.add_parser('stream', help='Stream audio to speaker using GStreamer')
+    gst_stream_parser.add_argument('speaker', help='Speaker name or IP address')
+    gst_stream_parser.add_argument('--source-type', choices=['pulse', 'alsa', 'file'], default='pulse', 
+                                  help='Audio source type (default: pulse)')
+    gst_stream_parser.add_argument('--source-device', help='Specific device to use (optional)')
     
     args = parser.parse_args()
     
@@ -299,6 +310,30 @@ def main():
                 print(f"Synced volume between {speaker.name} and PipeWire device {args.device}")
             else:
                 print("Failed to sync volumes")
+    
+    # Handle gstreamer commands
+    elif args.command == 'gstreamer':
+        # Create GStreamer controller
+        gstreamer_streamer = GStreamerAudioStreamer()
+        
+        if not gstreamer_streamer.is_available():
+            print("GStreamer integration is not available")
+            print("Please install GStreamer and PyGObject (python3-gi) with appropriate plugins")
+            return
+        
+        if args.gstreamer_action == 'stream':
+            controller.discover()
+            speaker = controller.get_speaker_by_name(args.speaker) or controller.get_speaker_by_ip(args.speaker)
+            
+            if not speaker:
+                print(f"Speaker '{args.speaker}' not found")
+                return
+            
+            success = gstreamer_streamer.stream_to_speaker(speaker, args.source_type, args.source_device)
+            if success:
+                print(f"Set up GStreamer audio streaming to {speaker.name}")
+            else:
+                print("Failed to set up GStreamer streaming")
 
 
 if __name__ == "__main__":

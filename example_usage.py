@@ -3,7 +3,7 @@
 Example usage of the Samsung WAM Speaker Controller
 """
 
-from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer
+from wam_discovery import WamController, SamsungWamSpeaker, PipeWireAudioStreamer, GStreamerAudioStreamer
 import time
 
 
@@ -271,6 +271,50 @@ def example_pipewire_integration():
             print(f"Failed to sync volumes")
 
 
+def example_gstreamer_integration():
+    """
+    Example: GStreamer integration
+    """
+    print("\n=== GStreamer Integration Example ===")
+    
+    gstreamer_streamer = GStreamerAudioStreamer()
+    
+    if not gstreamer_streamer.is_available():
+        print("GStreamer is not available on this system")
+        print("Please install GStreamer and PyGObject (python3-gi) with appropriate plugins")
+        return
+    
+    print("GStreamer is available!")
+    
+    # Try to use with a speaker
+    controller = WamController()
+    speakers = controller.discover()
+    
+    if not speakers:
+        print("No speakers found to demonstrate GStreamer integration")
+        return
+    
+    speaker = speakers[0]
+    print(f"\nUsing speaker: {speaker.name}")
+    
+    # Try to set up streaming with default pulse source
+    print("Setting up GStreamer audio streaming...")
+    success = gstreamer_streamer.stream_to_speaker(speaker, source_type="pulse")
+    if success:
+        print(f"Successfully set up GStreamer streaming to {speaker.name}")
+        print("Note: For actual streaming, you may need to run this with proper audio permissions")
+        
+        # Wait a moment to let stream establish
+        time.sleep(2)
+        
+        # Stop the streaming
+        stop_success = gstreamer_streamer.stop_streaming_to_speaker(speaker.ip_address)
+        if stop_success:
+            print(f"Successfully stopped streaming to {speaker.name}")
+    else:
+        print(f"Failed to set up GStreamer streaming to {speaker.name}")
+
+
 def main():
     """
     Main function to run all examples
@@ -285,6 +329,7 @@ def main():
     example_eq_control()
     example_info_retrieval()
     example_pipewire_integration()
+    example_gstreamer_integration()
     
     print("\nAll examples completed!")
 

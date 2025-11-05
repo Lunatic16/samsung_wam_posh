@@ -2,4 +2,4 @@ requests>=2.25.1
 # For PipeWire integration (optional)
 # python-pipewire - Install system package via your package manager
 # For advanced audio streaming, you may also need:
-# pygobject for GStreamer Python bindings
+PyGObject>=3.40.0  # for GStreamer Python bindings

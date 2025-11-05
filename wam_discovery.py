@@ -454,6 +454,67 @@ class PipeWireAudioStreamer:
         return True
 
 
+class GStreamerAudioStreamer:
+    """
+    Streams audio from system sources to Samsung WAM speakers using GStreamer
+    """
+    
+    def __init__(self):
+        try:
+            from gstreamer_integration import GStreamerAudioStreamer as GstStreamer
+            self.gst_streamer = GstStreamer()
+            self.available = self.gst_streamer.is_available()
+            if not self.available:
+                print("GStreamer not available. Install GStreamer and PyGObject.")
+        except ImportError:
+            print("GStreamer integration not available. Install gstreamer_integration module.")
+            self.gst_streamer = None
+            self.available = False
+    
+    def is_available(self) -> bool:
+        """
+        Check if GStreamer integration is available
+        """
+        return self.available and self.gst_streamer is not None
+    
+    def stream_to_speaker(self, speaker: SamsungWamSpeaker, source_type: str = "pulse", 
+                         source_device: str = None) -> bool:
+        """
+        Stream audio from system source to the specified speaker using GStreamer
+        
+        Args:
+            speaker: The SamsungWAM speaker to stream to
+            source_type: Type of audio source ("pulse", "alsa", "file")
+            source_device: Specific device to use (optional)
+            
+        Returns:
+            True if streaming setup was successful
+        """
+        if not self.is_available():
+            print("GStreamer not available for streaming")
+            return False
+            
+        return self.gst_streamer.stream_to_speaker(speaker, source_type, source_device)
+    
+    def stop_streaming_to_speaker(self, speaker_ip: str) -> bool:
+        """
+        Stop audio streaming to a specific speaker
+        """
+        if not self.is_available():
+            return False
+            
+        return self.gst_streamer.stop_streaming_to_speaker(speaker_ip)
+    
+    def stop_all_streams(self):
+        """
+        Stop all active audio streams
+        """
+        if not self.is_available():
+            return
+            
+        self.gst_streamer.stop_all_streams()
+
+
 class SamsungWamDiscovery:
     """
     Discover Samsung WAM speakers on the network using SSDP

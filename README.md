@@ -12,6 +12,7 @@ A comprehensive Linux-compatible Python implementation for controlling Samsung W
 - **Content Services**: Interface with various music services through CPM API
 - **Network Configuration**: WiFi settings, speaker information, and system settings management
 - **PipeWire Integration**: Advanced audio streaming and volume synchronization with PipeWire audio server
+- **GStreamer Integration**: Advanced audio streaming capabilities using GStreamer
 - **Command-Line Interface**: Complete CLI tool for integration into scripts and automation
 
 ## Files
@@ -22,16 +23,20 @@ Main Python library containing:
 - `SamsungWamDiscovery` class for network discovery of speakers
 - `WamController` class for high-level speaker management
 - `PipeWireAudioStreamer` class for PipeWire integration
+- `GStreamerAudioStreamer` class for GStreamer integration
 - Functions to load and save speaker configurations
 
 ### `wam_cli.py`
-Command-line interface for controlling speakers from the terminal with subcommands for all operations, including PipeWire integration commands.
+Command-line interface for controlling speakers from the terminal with subcommands for all operations, including PipeWire and GStreamer integration commands.
 
 ### `pipewire_integration.py`
 PipeWire-specific integration module for audio streaming and device management.
 
+### `gstreamer_integration.py`
+GStreamer-specific integration module for advanced audio streaming capabilities.
+
 ### `example_usage.py`
-Complete examples demonstrating all the functionality of the library, including PipeWire integration.
+Complete examples demonstrating all the functionality of the library, including PipeWire and GStreamer integration.
 
 ### `WAM_API.txt`
 A comprehensive list of API commands available for Samsung WAM speakers, organized into:
@@ -46,7 +51,10 @@ A JSON file containing configuration for Samsung speakers on the network, includ
 1. Install Python 3.6 or higher
 2. Install dependencies: `pip install -r requirements.txt`
 3. For PipeWire integration: Install system packages `pipewire` and `pipewire-alsa` (or `pulseaudio` for compatibility)
-4. For advanced audio streaming: Install `gstreamer` and Python GStreamer bindings
+4. For GStreamer integration: Install `gstreamer` and Python GStreamer bindings:
+   - Ubuntu/Debian: `sudo apt-get install python3-gi gir1.2-gstreamer-1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good`
+   - Fedora/RHEL: `sudo dnf install python3-gobject gstreamer1.0-plugins-base gstreamer1.0-plugins-good`
+   - Arch: `sudo pacman -S python-gobject gst-plugins-base gst-plugins-good`
 
 ## Usage
 
@@ -81,6 +89,9 @@ python3 wam_cli.py info "Living Room"
 python3 wam_cli.py pipewire devices                    # List PipeWire devices
 python3 wam_cli.py pipewire stream "Living Room"      # Stream to speaker
 python3 wam_cli.py pipewire sync "Living Room" sink0  # Sync volumes
+
+# GStreamer integration commands
+python3 wam_cli.py gstreamer stream "Living Room" --source-type pulse  # Stream using PulseAudio source
 ```
 
 ### Python Library Usage
@@ -108,6 +119,13 @@ if pipewire.is_available():
     pipewire.stream_to_speaker(speaker)
     # Sync volumes
     pipewire.sync_volume_with_pipewire(speaker, devices[0]['id'])
+
+# GStreamer integration
+from wam_discovery import GStreamerAudioStreamer
+gstreamer = GStreamerAudioStreamer()
+if gstreamer.is_available():
+    # Stream audio from system to speaker
+    gstreamer.stream_to_speaker(speaker, source_type="pulse")
 ```
 
 ## Requirements
@@ -115,8 +133,8 @@ if pipewire.is_available():
 - Python 3.6+
 - requests library
 - PipeWire (or PulseAudio for compatibility) audio server
+- For advanced audio streaming: GStreamer with Python bindings (PyGObject)
 - Samsung WAM speakers on the local network
-- For advanced audio streaming: GStreamer with Python bindings
 
 ## API Information
 
@@ -132,4 +150,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is provided as-is without any warranty.# samsung_wam_posh
+This project is provided as-is without any warranty.
